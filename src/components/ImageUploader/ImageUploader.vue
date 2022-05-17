@@ -1,10 +1,13 @@
 <template>
   <div class="p-4 flex">
-    <div
-      v-if="preview"
-      class="border-2 rounded-md p-2 flex items-center border-gray-100 max-w-[100px] h-[100px] mr-2"
-    >
-      <img :src="preview" />
+    <div v-if="imageList.length > 0" class="flex">
+      <div
+        v-for="image in imageList"
+        :key="image"
+        class="border-2 rounded-md p-2 flex items-center border-gray-100 max-w-[100px] h-[100px] mr-2"
+      >
+        <img :src="image" />
+      </div>
     </div>
     <div class="mr-2">
       <input
@@ -42,6 +45,7 @@ export default {
   data() {
     return {
       preview: null,
+      imageList: [],
     };
   },
   methods: {
@@ -49,14 +53,9 @@ export default {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.preview = e.target.result;
+        this.imageList.push(e.target.result);
       };
       reader.readAsDataURL(file);
-      const image = new Image();
-      image.src = this.preview;
-      const imgWindow = window.open(this.preview);
-      console.log(imgWindow);
-      imgWindow.document.write(image.outerHTML);
     },
   },
 };
