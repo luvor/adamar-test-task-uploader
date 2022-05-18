@@ -38,24 +38,100 @@
         Upload
       </label>
     </div>
+    <div
+      :class="{
+        hidden: previewImage === null,
+      }"
+      class="absolute w-full h-full bg-black/50 inset-0 flex justify-center"
+      @click="previewImage = null"
+    >
+      <div
+        @click.stop
+        class="relative bg-white p-2 m-4 max-w-[500px] max-h-[500px] h-min"
+      >
+        <canvas class="max-w-full max-h-full" id="canvas"></canvas>
+        <div
+          class="absolute right-0 bottom-0 flex justify-center items-center p-4"
+          @click.stop
+        >
+          <button
+            class="bg-white text-black border-0 px-3 py-2 mr-2 rounded-sm shadow-md hover:text-blue-500 duration-300"
+            @click="appendImage"
+          >
+            Cancel
+          </button>
+          <button
+            class="bg-blue-400 text-white border-0 px-3 py-2 rounded-sm shadow-md hover:bg-blue-500 duration-300"
+            @click="appendImage"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
 export default {
   data() {
     return {
-      preview: null,
+      previewImage: null,
+      previewResult: null,
       imageList: [],
     };
   },
   methods: {
+    onDrag(e) {
+      console.log(e);
+    },
     onFileChange(e) {
       const file = e.target.files[0];
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
       const reader = new FileReader();
-      reader.onload = (e) => {
-        this.imageList.push(e.target.result);
+      reader.onload = (file) => {
+        const image = new Image();
+        image.src = file.target.result;
+        image.onload = () => {
+          let outWidth = image.width;
+          let outHeight = image.height;
+          let xaxis = 0;
+          let yaxis = 0;
+
+          const aspectRatio = outWidth / outHeight;
+
+          this.previewImage = !0;
+
+          if (aspectRatio !== 1) {
+            if (outWidth > outHeight) {
+              xaxis = (outWidth - outHeight) / 2;
+              outWidth = outHeight;
+            } else {
+              yaxis = (outHeight - outWidth) / 2;
+              outHeight = outWidth;
+            }
+          }
+          canvas.width = outWidth;
+          canvas.height = outHeight;
+          ctx.drawImage(
+            image,
+            xaxis,
+            yaxis,
+            outWidth,
+            outHeight,
+            0,
+            0,
+            outWidth,
+            outHeight
+          );
+          this.previewResult = canvas.toDataURL();
+        };
       };
       reader.readAsDataURL(file);
+    },
+    appendImage() {
+      this.imageList.push(this.previewResult);
+      this.previewImage = null;
     },
   },
 };
