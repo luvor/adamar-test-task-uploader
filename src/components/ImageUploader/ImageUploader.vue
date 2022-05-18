@@ -2,10 +2,26 @@
   <div class="p-4 flex">
     <div v-if="imageList.length > 0" class="flex">
       <div
-        v-for="image in imageList"
+        v-for="(image, index) in imageList"
         :key="image"
-        class="border-2 rounded-md p-2 flex items-center border-gray-100 max-w-[100px] h-[100px] mr-2"
+        class="group relative border-2 rounded-md p-2 flex items-center border-gray-100 max-w-[100px] h-[100px] mr-2"
       >
+        <div
+          class="hidden group-hover:flex group-hover:items-center group-hover:justify-center group-hover:absolute group-hover:inset-0 group-hover:bg-black/80"
+        >
+          <button
+            @click="watchImageFromList(index)"
+            class="border-0 text-white hover:text-blue-400 mr-1"
+          >
+            <base-icon name="eye" size="1.2em" />
+          </button>
+          <button
+            @click="deleteImageFromList(index)"
+            class="border-0 text-white hover:text-blue-400"
+          >
+            <base-icon name="delete" size="1.2em" />
+          </button>
+        </div>
         <img :src="image" />
       </div>
     </div>
@@ -20,21 +36,7 @@
         class="flex justify-center items-center indent-1 hover:cursor-pointer hover:border-blue-400 bg-gray-100 border-2 border-gray-200 border-dashed rounded-md p-2 w-[100px] h-[100px] transition-all duration-300 ease-in-out"
         for="imageuploader__upload-btn"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          aria-hidden="true"
-          role="img"
-          width="16"
-          height="16"
-          preserveAspectRatio="xMidYMid meet"
-          viewBox="0 0 24 24"
-        >
-          <path
-            fill="currentColor"
-            d="M18 12.998h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5v-5a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2z"
-          ></path>
-        </svg>
+        <base-icon name="plus" size="1em" />
         Upload
       </label>
     </div>
@@ -49,14 +51,20 @@
         @click.stop
         class="relative bg-white p-2 m-4 max-w-[500px] max-h-[500px] h-min"
       >
-        <canvas class="max-w-full max-h-full" id="canvas"></canvas>
+        <img
+          v-if="previewImage && typeof previewImage === 'object'"
+          :src="previewImage[0]"
+        />
+        <canvas v-else class="max-w-full max-h-full" id="canvas"></canvas>
         <div
+          :class="{
+            hidden: typeof previewImage === 'object',
+          }"
           class="absolute right-0 bottom-0 flex justify-center items-center p-4"
-          @click.stop
         >
           <button
             class="bg-white text-black border-0 px-3 py-2 mr-2 rounded-sm shadow-md hover:text-blue-500 duration-300"
-            @click="appendImage"
+            @click="cancelImageUpload"
           >
             Cancel
           </button>
@@ -72,7 +80,11 @@
   </div>
 </template>
 <script>
+import BaseIcon from "@/components/BaseIcon.vue";
 export default {
+  components: {
+    BaseIcon,
+  },
   data() {
     return {
       previewImage: null,
@@ -128,6 +140,15 @@ export default {
         };
       };
       reader.readAsDataURL(file);
+    },
+    deleteImageFromList(id) {
+      this.imageList.splice(id, 1);
+    },
+    watchImageFromList(id) {
+      this.previewImage = [this.imageList[id], "no-buttons"];
+    },
+    cancelImageUpload() {
+      this.previewImage = null;
     },
     appendImage() {
       this.imageList.push(this.previewResult);
