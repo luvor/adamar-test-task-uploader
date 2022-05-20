@@ -51,6 +51,49 @@
         @click.stop
         class="relative bg-white p-2 m-4 max-w-[500px] max-h-[500px] h-min"
       >
+        <div
+          :class="{
+            hidden: typeof previewImage === 'object',
+          }"
+          class="absolute top-0 right-0 flex justify-center items-center p-4 text-blue-400"
+        >
+          <button
+            :class="{
+              'bg-blue-400 text-white': imageRatio == '1:1',
+            }"
+            class="bg-white border-2 border-blue-400 px-3 py-2 mr-2 rounded-sm shadow-md hover:bg-blue-500 hover:border-blue-500 duration-300"
+            @click="changeCropRatio('1:1')"
+          >
+            1:1
+          </button>
+          <button
+            :class="{
+              'bg-blue-400 text-white': imageRatio == '4:3',
+            }"
+            class="bg-white border-2 border-blue-400 px-3 py-2 mr-2 rounded-sm shadow-md hover:bg-blue-500 hover:border-blue-500 duration-300"
+            @click="changeCropRatio('4:3')"
+          >
+            4:3
+          </button>
+          <button
+            :class="{
+              'bg-blue-400 text-white': imageRatio == '16:9',
+            }"
+            class="bg-white border-2 border-blue-400 px-3 py-2 mr-2 rounded-sm shadow-md hover:bg-blue-500 hover:border-blue-500 duration-300"
+            @click="changeCropRatio('16:9')"
+          >
+            16:9
+          </button>
+          <button
+            :class="{
+              'bg-blue-400 text-white': imageRatio == '18:9',
+            }"
+            class="bg-white border-2 border-blue-400 px-3 py-2 mr-2 rounded-sm shadow-md hover:bg-blue-500 hover:border-blue-500 duration-300"
+            @click="changeCropRatio('18:9')"
+          >
+            18:9
+          </button>
+        </div>
         <img
           v-if="previewImage && typeof previewImage === 'object'"
           :src="previewImage[0]"
@@ -81,6 +124,7 @@
 </template>
 <script>
 import BaseIcon from "@/components/BaseIcon.vue";
+import { getRatioSize } from "@/utils/imageUploader";
 export default {
   components: {
     BaseIcon,
@@ -89,15 +133,32 @@ export default {
     return {
       previewImage: null,
       previewResult: null,
+      imageFile: null,
+      imageRatio: "1:1",
       imageList: [],
     };
   },
   methods: {
-    onDrag(e) {
-      console.log(e);
-    },
     onFileChange(e) {
       const file = e.target.files[0];
+      this.imageFile = file;
+      this.cropImage();
+    },
+    deleteImageFromList(id) {
+      this.imageList.splice(id, 1);
+    },
+    watchImageFromList(id) {
+      this.previewImage = [this.imageList[id], "no-buttons"];
+    },
+    cancelImageUpload() {
+      this.previewImage = null;
+    },
+    changeCropRatio(ratio) {
+      this.imageRatio = ratio;
+      this.cropImage();
+    },
+    cropImage() {
+      const file = this.imageFile;
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       const reader = new FileReader();
@@ -110,45 +171,33 @@ export default {
           let xaxis = 0;
           let yaxis = 0;
 
-          const aspectRatio = outWidth / outHeight;
-
           this.previewImage = !0;
 
-          if (aspectRatio !== 1) {
-            if (outWidth > outHeight) {
-              xaxis = (outWidth - outHeight) / 2;
-              outWidth = outHeight;
-            } else {
-              yaxis = (outHeight - outWidth) / 2;
-              outHeight = outWidth;
-            }
-          }
-          canvas.width = outWidth;
-          canvas.height = outHeight;
+          let { ratioWidth, ratioHeight } = getRatioSize(
+            this.imageRatio,
+            outWidth,
+            outHeight
+          );
+
+          console.log(ratioWidth, ratioHeight);
+
+          canvas.width = ratioWidth;
+          canvas.height = ratioHeight;
           ctx.drawImage(
             image,
             xaxis,
             yaxis,
-            outWidth,
-            outHeight,
+            ratioWidth,
+            ratioHeight,
             0,
             0,
-            outWidth,
-            outHeight
+            ratioWidth,
+            ratioHeight
           );
           this.previewResult = canvas.toDataURL();
         };
       };
       reader.readAsDataURL(file);
-    },
-    deleteImageFromList(id) {
-      this.imageList.splice(id, 1);
-    },
-    watchImageFromList(id) {
-      this.previewImage = [this.imageList[id], "no-buttons"];
-    },
-    cancelImageUpload() {
-      this.previewImage = null;
     },
     appendImage() {
       this.imageList.push(this.previewResult);
